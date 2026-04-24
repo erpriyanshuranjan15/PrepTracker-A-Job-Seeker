@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PrepTracker – Resume</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">PT</div>
+      <span class="logo-text">PrepTracker</span>
+    </div>
+    <ul class="nav-links">
+      <li><a href="dashboard.html" class="nav-item"><span class="nav-icon">⬡</span><span>Dashboard</span></a></li>
+      <li><a href="skills.html"    class="nav-item"><span class="nav-icon">◈</span><span>Skills</span></a></li>
+      <li><a href="goals.html"     class="nav-item"><span class="nav-icon">◎</span><span>Daily Goals</span></a></li>
+      <li><a href="companies.html" class="nav-item"><span class="nav-icon">◷</span><span>Companies</span></a></li>
+      <li><a href="resume.html"    class="nav-item active"><span class="nav-icon">◻</span><span>Resume</span></a></li>
+      <li><a href="notes.html"     class="nav-item"><span class="nav-icon">◈</span><span>Notes</span></a></li>
+    </ul>
+    <div class="sidebar-footer" style="flex-direction:column;align-items:flex-start;gap:8px">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="user-avatar">?</div>
+        <div class="user-info">
+          <span class="user-name">Loading…</span>
+          <span class="user-role">PrepTracker</span>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <main class="main-content">
+    <header class="top-header">
+      <div class="header-left">
+        <button class="menu-btn" onclick="toggleSidebar()">☰</button>
+        <div>
+          <h1 class="page-title">Resume & Profile</h1>
+          <p class="page-sub">Manage and track all versions of your resume</p>
+        </div>
+      </div>
+      <div class="header-right">
+        <button class="btn-primary" onclick="document.getElementById('file-input').click()">⬆ Upload New Version</button>
+        <input type="file" id="file-input" style="display:none" accept=".pdf,.docx" onchange="uploadResume(this)">
+      </div>
+    </header>
+
+    <div class="resume-layout">
+      <!-- Left Panel -->
+      <div>
+        <!-- Upload Zone -->
+        <div class="resume-upload-card" style="margin-bottom:20px;">
+          <h3 style="font-family:'Syne',sans-serif;font-size:16px;font-weight:700;margin-bottom:16px;">Upload Resume</h3>
+          <div class="upload-zone" onclick="document.getElementById('file-input').click()">
+            <div class="upload-icon">📄</div>
+            <div class="upload-title">Drop your resume here</div>
+            <div class="upload-sub">PDF or DOCX · Max 5MB</div>
+            <div style="margin-top:16px;">
+              <span class="btn-primary" style="font-size:12px;padding:8px 16px;border-radius:8px;display:inline-block">Browse Files</span>
+            </div>
+          </div>
+          <div id="upload-progress" style="display:none;margin-top:12px;">
+            <div style="display:flex;justify-content:space-between;font-size:12px;color:rgba(197,157,217,0.45);margin-bottom:6px;">
+              <span>Uploading...</span><span id="upload-pct">0%</span>
+            </div>
+            <div class="skill-bar-bg" style="height:6px">
+              <div class="skill-bar-fill" id="upload-bar" style="background:var(--amethyst);width:0%;transition:width 0.2s"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Version History -->
+        <div class="resume-upload-card">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+            <h3 style="font-size:16px;font-weight:700;">Version History</h3>
+            <button class="btn-primary" style="font-size:11px;padding:5px 12px" onclick="openAddVersion()">+ Add Version</button>
+          </div>
+          <ul class="version-history" id="version-list">
+            <li style="color:var(--text-muted);font-size:13px;padding:10px 0">No versions yet. Upload or add a version.</li>
+          </ul>
+        </div>
+
+        <!-- Resume Score -->
+        <div class="resume-upload-card" style="margin-top:20px;">
+          <h3 style="font-size:16px;font-weight:700;margin-bottom:16px;">Resume Score</h3>
+          <div id="resume-score-ring" style="position:relative;width:100px;height:100px;margin:0 auto 16px;">
+            <canvas id="resumeScore"></canvas>
+            <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center">
+              <span id="score-num" style="font-size:22px;font-weight:800;color:#C59DD9">0</span>
+            </div>
+          </div>
+          <div id="score-items" style="display:flex;flex-direction:column;gap:8px;"></div>
+          <button class="btn-secondary" style="width:100%;margin-top:16px;font-size:12px" onclick="openEditScore()">Edit Score & Checklist</button>
+        </div>
+      </div>
+
+      <!-- Resume Preview / Editor -->
+      <div class="resume-preview">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+          <h3 style="font-size:16px;font-weight:700;" id="preview-title">Resume Preview</h3>
+          <div style="display:flex;gap:8px">
+            <button class="btn-secondary" style="font-size:12px;padding:6px 12px" onclick="toggleEdit()">✏️ Edit</button>
+            <button class="btn-primary"   style="font-size:12px;padding:6px 12px" onclick="saveResumeDoc()">💾 Save</button>
+          </div>
+        </div>
+
+        <!-- Editable resume fields -->
+        <div id="resume-view">
+          <div class="resume-doc" id="resume-doc-view"></div>
+        </div>
+        <div id="resume-edit" style="display:none;">
+          <div style="display:flex;flex-direction:column;gap:12px;">
+            <div class="form-group">
+              <label class="form-label">Full Name</label>
+              <input type="text" class="form-input" id="r-name" placeholder="Your Name">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Contact Line</label>
+              <input type="text" class="form-input" id="r-contact" placeholder="email | phone | linkedin | github">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Education</label>
+              <textarea class="form-textarea" id="r-education" rows="3" placeholder="Degree, Institution, Year, CGPA"></textarea>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Experience</label>
+              <textarea class="form-textarea" id="r-experience" rows="5" placeholder="Role, Company, Duration, Key points..."></textarea>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Projects</label>
+              <textarea class="form-textarea" id="r-projects" rows="4" placeholder="Project name, tech stack, impact..."></textarea>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Skills</label>
+              <textarea class="form-textarea" id="r-skills" rows="3" placeholder="Languages, Frameworks, Tools..."></textarea>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Achievements</label>
+              <textarea class="form-textarea" id="r-achievements" rows="3" placeholder="Awards, competitive programming, scholarships..."></textarea>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Add Version Modal -->
+  <div class="modal-overlay" id="version-modal">
+    <div class="modal">
+      <div class="modal-title">Add Resume Version</div>
+      <div class="form-group">
+        <label class="form-label">Version Name</label>
+        <input type="text" class="form-input" id="ver-name" placeholder="e.g., Resume_v3.2.pdf">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Date</label>
+        <input type="date" class="form-input" id="ver-date">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Size (optional)</label>
+        <input type="text" class="form-input" id="ver-size" placeholder="e.g., 320 KB">
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" onclick="closeVersionModal()">Cancel</button>
+        <button class="btn-primary" onclick="saveVersion()">Add</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Score Modal -->
+  <div class="modal-overlay" id="score-modal">
+    <div class="modal">
+      <div class="modal-title">Edit Resume Score</div>
+      <div class="form-group">
+        <label class="form-label">Score (0–100): <span id="score-slider-val">0</span></label>
+        <input type="range" min="0" max="100" id="score-slider" style="width:100%;accent-color:#7A3F91;margin-top:8px"
+          oninput="document.getElementById('score-slider-val').textContent=this.value">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Checklist Items (one per line)</label>
+        <textarea class="form-textarea" id="score-items-input" rows="6" placeholder="✓ Contact info complete&#10;✓ 2+ internship experiences&#10;Add GitHub/portfolio link"></textarea>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" onclick="closeScoreModal()">Cancel</button>
+        <button class="btn-primary" onclick="saveScore()">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script src="app.js"></script>
+  <script>
+  (function(){
+    if(!PTAuth.requireAuth()) return;
+    PTAuth.applyShell();
+
+    let resumeData = { score:0, scoreItems:[], versions:[], currentVersion:'', doc:{name:'',contact:'',education:'',experience:'',projects:'',skills:'',achievements:''} };
+    let scoreChart;
+    let editMode = false;
+
+    function esc(s){const d=document.createElement('div');d.textContent=s==null?'':String(s);return d.innerHTML;}
+
+    // ── Score ring chart ─────────────────────
+    scoreChart = new Chart(document.getElementById('resumeScore'),{
+      type:'doughnut',
+      data:{datasets:[{data:[0,100],backgroundColor:['#7A3F91','rgba(197,157,217,0.08)'],borderWidth:0}]},
+      options:{cutout:'72%',plugins:{legend:{display:false},tooltip:{enabled:false}}}
+    });
+
+    // ── Load from MongoDB ─────────────────────
+    async function loadResume() {
+      try { resumeData = await PTAuth.api('/api/resume'); } catch { }
+      if(!resumeData.doc) resumeData.doc={name:'',contact:'',education:'',experience:'',projects:'',skills:'',achievements:''};
+      renderAll();
+    }
+
+    function renderAll() {
+      renderScore();
+      renderVersions();
+      renderDocView();
+      populateEditFields();
+    }
+
+    function renderScore() {
+      const s = resumeData.score||0;
+      document.getElementById('score-num').textContent = s;
+      scoreChart.data.datasets[0].data=[s,100-s];
+      scoreChart.update();
+      const items = resumeData.scoreItems||[];
+      document.getElementById('score-items').innerHTML = items.map(item=>{
+        const done = item.startsWith('✓');
+        return `<div class="goal-item ${done?'done':''}">
+          <span class="g-check ${done?'':'empty'}">${done?'✓':''}</span>
+          <span>${esc(item.replace(/^✓\s*/,''))}</span>
+        </div>`;
+      }).join('') || '<div style="color:var(--text-muted);font-size:12px">No checklist items. Click Edit Score.</div>';
+    }
+
+    function renderVersions() {
+      const ul = document.getElementById('version-list');
+      const vs = resumeData.versions||[];
+      if(!vs.length){ul.innerHTML='<li style="color:var(--text-muted);font-size:13px;padding:10px 0">No versions yet.</li>';return;}
+      ul.innerHTML = vs.map((v,i)=>`
+        <li class="version-item" style="cursor:pointer;border:1px solid ${resumeData.currentVersion===v.name?'var(--accent)':'var(--border)'}">
+          <div class="ver-icon">📄</div>
+          <div class="ver-info" onclick="setCurrentVersion('${esc(v.name)}')">
+            <div class="ver-name">${esc(v.name)} ${resumeData.currentVersion===v.name?'<span style="background:rgba(122,63,145,0.3);color:#C59DD9;padding:2px 8px;border-radius:6px;font-size:10px;font-weight:700">Current</span>':''}</div>
+            <div class="ver-date">${esc(v.date)} ${v.size?'· '+esc(v.size):''}</div>
+          </div>
+          <button style="background:none;border:none;color:rgba(197,157,217,0.45);cursor:pointer;font-size:14px" onclick="deleteVersion(${i})" title="Delete">🗑</button>
+        </li>`).join('');
+      const cur = vs.find(v=>v.name===resumeData.currentVersion)||vs[0];
+      document.getElementById('preview-title').textContent = `Preview — ${cur?cur.name:''}`;
+    }
+
+    function renderDocView() {
+      const d = resumeData.doc||{};
+      document.getElementById('resume-doc-view').innerHTML = `
+        <h1>${esc(d.name)||'Your Name'}</h1>
+        <p class="resume-meta">${esc(d.contact)||'email | phone | linkedin | github'}</p>
+        ${d.education?`<h2>Education</h2><p>${esc(d.education).replace(/\n/g,'<br>')}</p>`:''}
+        ${d.experience?`<h2>Experience</h2><p>${esc(d.experience).replace(/\n/g,'<br>')}</p>`:''}
+        ${d.projects?`<h2>Projects</h2><p>${esc(d.projects).replace(/\n/g,'<br>')}</p>`:''}
+        ${d.skills?`<h2>Skills</h2><p>${esc(d.skills).replace(/\n/g,'<br>')}</p>`:''}
+        ${d.achievements?`<h2>Achievements</h2><p>${esc(d.achievements).replace(/\n/g,'<br>')}</p>`:''}
+        ${!d.name&&!d.education?'<div style="color:#aaa;font-size:13px;margin-top:20px">Click ✏️ Edit to fill in your resume details.</div>':''}`;
+    }
+
+    function populateEditFields() {
+      const d=resumeData.doc||{};
+      document.getElementById('r-name').value=d.name||'';
+      document.getElementById('r-contact').value=d.contact||'';
+      document.getElementById('r-education').value=d.education||'';
+      document.getElementById('r-experience').value=d.experience||'';
+      document.getElementById('r-projects').value=d.projects||'';
+      document.getElementById('r-skills').value=d.skills||'';
+      document.getElementById('r-achievements').value=d.achievements||'';
+    }
+
+    // ── Edit toggle ──────────────────────────
+    window.toggleEdit=function(){
+      editMode=!editMode;
+      document.getElementById('resume-view').style.display=editMode?'none':'block';
+      document.getElementById('resume-edit').style.display=editMode?'block':'none';
+    };
+
+    window.saveResumeDoc=async function(){
+      const doc={
+        name:document.getElementById('r-name').value.trim(),
+        contact:document.getElementById('r-contact').value.trim(),
+        education:document.getElementById('r-education').value.trim(),
+        experience:document.getElementById('r-experience').value.trim(),
+        projects:document.getElementById('r-projects').value.trim(),
+        skills:document.getElementById('r-skills').value.trim(),
+        achievements:document.getElementById('r-achievements').value.trim(),
+      };
+      try {
+        resumeData=await PTAuth.api('/api/resume',{method:'PUT',body:JSON.stringify({...resumeData,doc})});
+        if(!resumeData.doc) resumeData.doc=doc;
+        renderDocView();
+        editMode=false;
+        document.getElementById('resume-view').style.display='block';
+        document.getElementById('resume-edit').style.display='none';
+      } catch(e){alert(e.message);}
+    };
+
+    // ── Version management ───────────────────
+    window.openAddVersion=function(){
+      document.getElementById('ver-name').value='';
+      document.getElementById('ver-date').value=new Date().toISOString().slice(0,10);
+      document.getElementById('ver-size').value='';
+      document.getElementById('version-modal').classList.add('open');
+    };
+    window.closeVersionModal=function(){document.getElementById('version-modal').classList.remove('open');};
+    window.saveVersion=async function(){
+      const name=document.getElementById('ver-name').value.trim();
+      const date=document.getElementById('ver-date').value;
+      const size=document.getElementById('ver-size').value.trim();
+      if(!name) return alert('Enter a version name');
+      const versions=[{name,date,size},...(resumeData.versions||[])];
+      const currentVersion=resumeData.currentVersion||name;
+      try{
+        resumeData=await PTAuth.api('/api/resume',{method:'PUT',body:JSON.stringify({...resumeData,versions,currentVersion})});
+        renderVersions();
+        closeVersionModal();
+      }catch(e){alert(e.message);}
+    };
+    window.setCurrentVersion=async function(name){
+      try{resumeData=await PTAuth.api('/api/resume',{method:'PUT',body:JSON.stringify({...resumeData,currentVersion:name})});renderVersions();}catch(e){alert(e.message);}
+    };
+    window.deleteVersion=async function(idx){
+      if(!confirm('Delete this version?')) return;
+      const versions=(resumeData.versions||[]).filter((_,i)=>i!==idx);
+      const currentVersion=versions.length?versions[0].name:'';
+      try{resumeData=await PTAuth.api('/api/resume',{method:'PUT',body:JSON.stringify({...resumeData,versions,currentVersion})});renderVersions();}catch(e){alert(e.message);}
+    };
+
+    // ── Upload (simulated progress + save version entry) ─
+    window.uploadResume=function(input){
+      if(!input.files[0]) return;
+      const file=input.files[0];
+      const prog=document.getElementById('upload-progress');
+      const bar=document.getElementById('upload-bar');
+      const pct=document.getElementById('upload-pct');
+      prog.style.display='block'; let p=0;
+      const iv=setInterval(async()=>{
+        p+=15; bar.style.width=p+'%'; pct.textContent=p+'%';
+        if(p>=100){
+          clearInterval(iv);
+          setTimeout(async()=>{
+            prog.style.display='none';
+            const name=file.name;
+            const date=new Date().toISOString().slice(0,10);
+            const size=Math.round(file.size/1024)+' KB';
+            const versions=[{name,date,size},...(resumeData.versions||[])];
+            try{resumeData=await PTAuth.api('/api/resume',{method:'PUT',body:JSON.stringify({...resumeData,versions,currentVersion:name})});renderVersions();}catch{}
+          },600);
+        }
+      },200);
+    };
+
+    // ── Score modal ──────────────────────────
+    window.openEditScore=function(){
+      document.getElementById('score-slider').value=resumeData.score||0;
+      document.getElementById('score-slider-val').textContent=resumeData.score||0;
+      document.getElementById('score-items-input').value=(resumeData.scoreItems||[]).join('\n');
+      document.getElementById('score-modal').classList.add('open');
+    };
+    window.closeScoreModal=function(){document.getElementById('score-modal').classList.remove('open');};
+    window.saveScore=async function(){
+      const score=Number(document.getElementById('score-slider').value);
+      const scoreItems=document.getElementById('score-items-input').value.split('\n').map(s=>s.trim()).filter(Boolean);
+      try{resumeData=await PTAuth.api('/api/resume',{method:'PUT',body:JSON.stringify({...resumeData,score,scoreItems})});renderScore();closeScoreModal();}catch(e){alert(e.message);}
+    };
+
+    loadResume();
+  })();
+  </script>
+</body>
+</html>

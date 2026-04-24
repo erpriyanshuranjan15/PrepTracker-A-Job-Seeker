@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PrepTracker – Daily Goals</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">PT</div>
+      <span class="logo-text">PrepTracker</span>
+    </div>
+    <ul class="nav-links">
+      <li><a href="dashboard.html" class="nav-item"><span class="nav-icon">⬡</span><span>Dashboard</span></a></li>
+      <li><a href="skills.html"    class="nav-item"><span class="nav-icon">◈</span><span>Skills</span></a></li>
+      <li><a href="goals.html"     class="nav-item active"><span class="nav-icon">◎</span><span>Daily Goals</span></a></li>
+      <li><a href="companies.html" class="nav-item"><span class="nav-icon">◷</span><span>Companies</span></a></li>
+      <li><a href="resume.html"    class="nav-item"><span class="nav-icon">◻</span><span>Resume</span></a></li>
+      <li><a href="notes.html"     class="nav-item"><span class="nav-icon">◈</span><span>Notes</span></a></li>
+    </ul>
+    <div class="sidebar-footer" style="flex-direction:column;align-items:flex-start;gap:8px">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="user-avatar">?</div>
+        <div class="user-info">
+          <span class="user-name">Loading…</span>
+          <span class="user-role">PrepTracker</span>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <main class="main-content">
+    <header class="top-header">
+      <div class="header-left">
+        <button class="menu-btn" onclick="toggleSidebar()">☰</button>
+        <div>
+          <h1 class="page-title">Daily Goals</h1>
+          <p class="page-sub">Stay consistent. Build the habit.</p>
+        </div>
+      </div>
+      <div class="header-right">
+        <div class="streak-badge" id="streak-badge">🔥 0 Day Streak</div>
+        <button class="btn-primary" onclick="openModal()">+ Add Goal</button>
+      </div>
+    </header>
+
+    <!-- Stats Row -->
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px;">
+      <div class="stat-card">
+        <div class="stat-icon" style="background:rgba(122,63,145,0.3)">✅</div>
+        <div class="stat-val" id="done-count">0</div>
+        <div class="stat-lbl">Completed</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="background:rgba(232,195,106,0.2)">⏳</div>
+        <div class="stat-val" id="pending-count">0</div>
+        <div class="stat-lbl">Pending</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="background:rgba(155,89,201,0.3)">🔥</div>
+        <div class="stat-val" id="streak-val">0</div>
+        <div class="stat-lbl">Day Streak</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="background:rgba(94,206,160,0.2)">📊</div>
+        <div class="stat-val" id="goal-weekly-pct">0%</div>
+        <div class="stat-lbl">Completion Rate</div>
+      </div>
+    </div>
+
+    <!-- Charts -->
+    <div style="display:grid;grid-template-columns:1.5fr 1fr;gap:20px;margin-bottom:24px;">
+      <div class="chart-card">
+        <div class="chart-header">
+          <h3>Goal Completion — This Week</h3>
+          <span class="chart-sub">Goals done per day</span>
+        </div>
+        <canvas id="goalLineChart" height="120"></canvas>
+      </div>
+      <div class="chart-card">
+        <div class="chart-header">
+          <h3>Today's Progress</h3>
+          <span class="chart-sub" id="progress-label">0 / 0 goals</span>
+        </div>
+        <div style="position:relative;width:160px;height:160px;margin:0 auto;">
+          <canvas id="todayDoughnut"></canvas>
+          <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;">
+            <span id="goal-donut-pct" style="font-size:32px;font-weight:800;color:#C59DD9">0%</span>
+            <span style="font-size:11px;color:rgba(197,157,217,0.45);display:block">done</span>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:16px;justify-content:center;">
+          <span id="goal-pill-done"    class="pill pill-green"  style="font-size:11px">0 Done</span>
+          <span id="goal-pill-pending" class="pill pill-yellow" style="font-size:11px">0 Pending</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Kanban -->
+    <div class="goals-columns">
+      <div class="goal-column">
+        <div class="goal-col-title">
+          <span style="width:10px;height:10px;border-radius:50%;background:#f59e0b;display:inline-block"></span>
+          Pending
+          <span class="col-badge" style="background:rgba(245,158,11,0.2);color:#f59e0b" id="pending-badge">0</span>
+        </div>
+        <div id="pending-goals"></div>
+      </div>
+      <div class="goal-column">
+        <div class="goal-col-title">
+          <span style="width:10px;height:10px;border-radius:50%;background:#3b82f6;display:inline-block"></span>
+          In Progress
+          <span class="col-badge" style="background:rgba(59,130,246,0.2);color:#3b82f6" id="inprogress-badge">0</span>
+        </div>
+        <div id="inprogress-goals"></div>
+      </div>
+      <div class="goal-column">
+        <div class="goal-col-title">
+          <span style="width:10px;height:10px;border-radius:50%;background:#22c55e;display:inline-block"></span>
+          Completed
+          <span class="col-badge" style="background:rgba(34,197,94,0.2);color:#22c55e" id="done-badge">0</span>
+        </div>
+        <div id="done-goals"></div>
+      </div>
+    </div>
+
+    <!-- Real Heatmap -->
+    <div class="chart-card" style="margin-top:24px;">
+      <div class="chart-header">
+        <h3>Consistency Heatmap</h3>
+        <span class="chart-sub">Last 12 weeks — goals completed per day</span>
+      </div>
+      <div style="display:flex;gap:4px;margin-top:4px;font-size:10px;color:rgba(197,157,217,0.4);margin-bottom:4px;padding-left:2px;">
+        <span style="width:14px">M</span><span style="width:18px"></span>
+        <span style="width:14px">T</span><span style="width:18px"></span>
+        <span style="width:14px">W</span><span style="width:18px"></span>
+        <span style="width:14px">T</span><span style="width:18px"></span>
+        <span style="width:14px">F</span><span style="width:18px"></span>
+        <span style="width:14px">S</span><span style="width:18px"></span>
+        <span style="width:14px">S</span>
+      </div>
+      <div id="heatmap" style="display:flex;gap:4px;overflow-x:auto;padding-bottom:8px;"></div>
+      <div style="display:flex;align-items:center;gap:8px;margin-top:12px;font-size:11px;color:rgba(197,157,217,0.45);">
+        Less
+        <div style="width:12px;height:12px;background:rgba(197,157,217,0.08);border-radius:3px"></div>
+        <div style="width:12px;height:12px;background:rgba(122,63,145,0.3);border-radius:3px"></div>
+        <div style="width:12px;height:12px;background:rgba(122,63,145,0.6);border-radius:3px"></div>
+        <div style="width:12px;height:12px;background:#7A3F91;border-radius:3px"></div>
+        More
+      </div>
+    </div>
+  </main>
+
+  <!-- Add Goal Modal -->
+  <div class="modal-overlay" id="modal">
+    <div class="modal">
+      <div class="modal-title">Add New Goal</div>
+      <div class="form-group">
+        <label class="form-label">Goal Title</label>
+        <input type="text" class="form-input" id="goal-title" placeholder="e.g., Solve 3 LeetCode problems">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Category</label>
+        <select class="form-select" id="goal-cat">
+          <option value="dsa">DSA</option>
+          <option value="sd">System Design</option>
+          <option value="cs">CS Fundamentals</option>
+          <option value="apt">Aptitude</option>
+          <option value="hr">Soft Skills / HR</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Deadline (optional)</label>
+        <input type="date" class="form-input" id="goal-deadline">
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" onclick="closeModal()">Cancel</button>
+        <button class="btn-primary" onclick="addGoal()">Add Goal</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script src="app.js"></script>
+  <script>
+  (function(){
+    if(!PTAuth.requireAuth()) return;
+    PTAuth.applyShell();
+
+    let goalsData = [];
+    let doughnutChart, lineChart;
+
+    function esc(s){ const d=document.createElement('div');d.textContent=s==null?'':String(s);return d.innerHTML; }
+    function dueLabel(dl){ if(!dl) return ''; const dt=new Date(dl); return isNaN(dt)?'':'Due: '+dt.toLocaleDateString(undefined,{month:'short',day:'numeric'}); }
+
+    function mapGoal(doc){
+      return { _id:doc._id, title:doc.goalTitle, cat:doc.category, status:doc.status, deadline:doc.deadline, updatedAt:doc.updatedAt, createdAt:doc.createdAt };
+    }
+
+    // ── Load all goals ────────────────────────
+    async function loadGoals(){
+      try { goalsData=(await PTAuth.api('/api/goals')||[]).map(mapGoal); }
+      catch(e){ alert(e.message); goalsData=[]; }
+      renderGoals();
+      buildHeatmap();
+      updateLineChart();
+      // live streak
+      try {
+        const d=await PTAuth.api('/api/dashboard');
+        document.getElementById('streak-badge').textContent=`🔥 ${d.streak} Day Streak`;
+        document.getElementById('streak-val').textContent=d.streak;
+      } catch{}
+    }
+
+    // ── Render kanban + stats ─────────────────
+    function renderGoals(){
+      const pending=goalsData.filter(g=>g.status==='pending');
+      const prog   =goalsData.filter(g=>g.status==='in_progress');
+      const done   =goalsData.filter(g=>g.status==='done');
+
+      document.getElementById('pending-count').textContent  = pending.length+prog.length;
+      document.getElementById('done-count').textContent     = done.length;
+      document.getElementById('pending-badge').textContent  = pending.length;
+      document.getElementById('inprogress-badge').textContent=prog.length;
+      document.getElementById('done-badge').textContent     = done.length;
+      document.getElementById('progress-label').textContent = `${done.length} / ${goalsData.length} goals`;
+
+      const total=goalsData.length||1;
+      const pct=Math.round(done.length/total*100);
+      document.getElementById('goal-donut-pct').textContent  = pct+'%';
+      document.getElementById('goal-weekly-pct').textContent = pct+'%';
+      document.getElementById('goal-pill-done').textContent    = done.length+' Done';
+      document.getElementById('goal-pill-pending').textContent = (pending.length+prog.length)+' Pending';
+
+      if(doughnutChart){ doughnutChart.data.datasets[0].data=[done.length,Math.max(pending.length+prog.length,0.001)]; doughnutChart.update(); }
+
+      function card(g, action, actionLabel){
+        return `<div class="goal-card" style="position:relative">
+          <div class="goal-card-title">${esc(g.title)}</div>
+          <div class="goal-card-meta">
+            <span class="g-tag ${esc(g.cat)}">${esc((g.cat||'').toUpperCase())}</span>
+            <span class="goal-card-date">${dueLabel(g.deadline)||actionLabel}</span>
+            <button onclick="deleteGoal('${g._id}')" style="background:none;border:none;color:rgba(197,157,217,0.35);cursor:pointer;font-size:14px;margin-left:auto" title="Delete">🗑</button>
+          </div>
+          ${action?`<button class="btn-primary" style="width:100%;margin-top:8px;font-size:12px;padding:6px" onclick="${action}('${g._id}')">${actionLabel}</button>`:''}
+        </div>`;
+      }
+
+      document.getElementById('pending-goals').innerHTML    = pending.map(g=>card(g,'markInProgress','▶ Start')).join('')||emptyCol('No pending goals');
+      document.getElementById('inprogress-goals').innerHTML = prog.map(g=>card(g,'markDone','✓ Mark Done')).join('')||emptyCol('None in progress');
+      document.getElementById('done-goals').innerHTML       = done.map(g=>`
+        <div class="goal-card" style="opacity:0.55;position:relative">
+          <div class="goal-card-title" style="text-decoration:line-through">${esc(g.title)}</div>
+          <div class="goal-card-meta">
+            <span class="g-tag ${esc(g.cat)}">${esc((g.cat||'').toUpperCase())}</span>
+            <span style="margin-left:auto;font-size:11px;color:#22c55e">✓ Done</span>
+            <button onclick="deleteGoal('${g._id}')" style="background:none;border:none;color:rgba(197,157,217,0.25);cursor:pointer;font-size:13px;margin-left:6px" title="Delete">🗑</button>
+          </div>
+        </div>`).join('')||emptyCol('No completed goals yet');
+    }
+
+    function emptyCol(msg){ return `<div style="color:var(--text-muted);font-size:12px;padding:12px 0;text-align:center">${msg}</div>`; }
+
+    // ── Real heatmap from goal data ───────────
+    function buildHeatmap(){
+      const heatmap=document.getElementById('heatmap');
+      heatmap.innerHTML='';
+      // Count done goals per date string
+      const counts={};
+      goalsData.filter(g=>g.status==='done'&&g.updatedAt).forEach(g=>{
+        const key=new Date(g.updatedAt).toDateString();
+        counts[key]=(counts[key]||0)+1;
+      });
+      // Build 12 weeks × 7 days ending today
+      const today=new Date(); today.setHours(23,59,59,999);
+      const start=new Date(today);
+      start.setDate(today.getDate()-83); // 84 days = 12 weeks
+      // Align to Monday
+      start.setDate(start.getDate()-((start.getDay()+6)%7));
+
+      const cur=new Date(start);
+      while(cur<=today){
+        const col=document.createElement('div');
+        col.style.cssText='display:flex;flex-direction:column;gap:4px;';
+        for(let d=0;d<7;d++){
+          const cell=document.createElement('div');
+          const key=new Date(cur).toDateString();
+          const v=counts[key]||0;
+          const color = v===0?'rgba(197,157,217,0.08)':v<=2?'rgba(122,63,145,0.3)':v<=4?'rgba(122,63,145,0.6)':'#7A3F91';
+          cell.style.cssText=`width:14px;height:14px;background:${color};border-radius:3px;cursor:default`;
+          cell.title=`${cur.toLocaleDateString(undefined,{month:'short',day:'numeric'})}: ${v} goal${v!==1?'s':''} done`;
+          col.appendChild(cell);
+          cur.setDate(cur.getDate()+1);
+        }
+        heatmap.appendChild(col);
+      }
+    }
+
+    // ── Weekly line chart from real data ──────
+    function updateLineChart(){
+      const now=new Date();
+      const dow=now.getDay();
+      const mon=new Date(now);
+      mon.setDate(now.getDate()-((dow+6)%7));
+      mon.setHours(0,0,0,0);
+      const counts=[0,0,0,0,0,0,0];
+      goalsData.filter(g=>g.status==='done'&&g.updatedAt).forEach(g=>{
+        const diff=Math.floor((new Date(g.updatedAt)-mon)/86400000);
+        if(diff>=0&&diff<7) counts[diff]++;
+      });
+      if(lineChart){ lineChart.data.datasets[0].data=counts; lineChart.update(); }
+    }
+
+    // ── Actions ───────────────────────────────
+    window.markInProgress=async function(id){
+      try{
+        const u=await PTAuth.api(`/api/goals/${id}`,{method:'PUT',body:JSON.stringify({status:'in_progress'})});
+        const i=goalsData.findIndex(x=>x._id===id); if(i>=0) goalsData[i]=mapGoal(u);
+        renderGoals();
+      }catch(e){alert(e.message);}
+    };
+    window.markDone=async function(id){
+      try{
+        const u=await PTAuth.api(`/api/goals/${id}`,{method:'PUT',body:JSON.stringify({status:'done'})});
+        const i=goalsData.findIndex(x=>x._id===id); if(i>=0) goalsData[i]=mapGoal(u);
+        renderGoals(); buildHeatmap(); updateLineChart();
+        // refresh streak
+        try{ const d=await PTAuth.api('/api/dashboard'); document.getElementById('streak-badge').textContent=`🔥 ${d.streak} Day Streak`; document.getElementById('streak-val').textContent=d.streak; }catch{}
+      }catch(e){alert(e.message);}
+    };
+    window.deleteGoal=async function(id){
+      if(!confirm('Delete this goal?')) return;
+      try{
+        await PTAuth.api(`/api/goals/${id}`,{method:'DELETE'});
+        goalsData=goalsData.filter(x=>x._id!==id);
+        renderGoals(); buildHeatmap(); updateLineChart();
+      }catch(e){alert(e.message);}
+    };
+    window.openModal=function(){ document.getElementById('modal').classList.add('open'); };
+    window.closeModal=function(){ document.getElementById('modal').classList.remove('open'); };
+    window.addGoal=async function(){
+      const goalTitle=document.getElementById('goal-title').value.trim();
+      const category=document.getElementById('goal-cat').value;
+      const dl=document.getElementById('goal-deadline').value;
+      if(!goalTitle) return;
+      try{
+        const created=await PTAuth.api('/api/goals',{method:'POST',body:JSON.stringify({goalTitle,category,status:'pending',deadline:dl?new Date(dl).toISOString():null})});
+        goalsData.unshift(mapGoal(created));
+        renderGoals(); closeModal();
+        document.getElementById('goal-title').value='';
+        document.getElementById('goal-deadline').value='';
+      }catch(e){alert(e.message);}
+    };
+
+    // ── Charts init ───────────────────────────
+    doughnutChart=new Chart(document.getElementById('todayDoughnut'),{
+      type:'doughnut',
+      data:{datasets:[{data:[0,1],backgroundColor:['#7A3F91','rgba(197,157,217,0.08)'],borderWidth:0}]},
+      options:{cutout:'72%',plugins:{legend:{display:false},tooltip:{enabled:false}}}
+    });
+    lineChart=new Chart(document.getElementById('goalLineChart'),{
+      type:'line',
+      data:{
+        labels:['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],
+        datasets:[
+          {label:'Completed',data:[0,0,0,0,0,0,0],borderColor:'#7A3F91',backgroundColor:'rgba(122,63,145,0.1)',fill:true,tension:0.4,pointBackgroundColor:'#7A3F91'},
+          {label:'Daily Target',data:[3,3,3,3,3,3,3],borderColor:'#C59DD9',borderDash:[5,5],fill:false,pointRadius:0}
+        ]
+      },
+      options:{
+        plugins:{legend:{labels:{color:'#C59DD9',boxWidth:10}}},
+        scales:{
+          x:{grid:{display:false},ticks:{color:'rgba(197,157,217,0.45)'}},
+          y:{grid:{color:'rgba(197,157,217,0.08)'},ticks:{color:'rgba(197,157,217,0.45)'},beginAtZero:true}
+        }
+      }
+    });
+
+    loadGoals();
+  })();
+  </script>
+</body>
+</html>

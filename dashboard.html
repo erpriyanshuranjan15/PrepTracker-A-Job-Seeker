@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PrepTracker – Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">PT</div>
+      <span class="logo-text">PrepTracker</span>
+    </div>
+    <ul class="nav-links">
+      <li><a href="dashboard.html" class="nav-item active"><span class="nav-icon">⬡</span><span>Dashboard</span></a></li>
+      <li><a href="skills.html"    class="nav-item"><span class="nav-icon">◈</span><span>Skills</span></a></li>
+      <li><a href="goals.html"     class="nav-item"><span class="nav-icon">◎</span><span>Daily Goals</span></a></li>
+      <li><a href="companies.html" class="nav-item"><span class="nav-icon">◷</span><span>Companies</span></a></li>
+      <li><a href="resume.html"    class="nav-item"><span class="nav-icon">◻</span><span>Resume</span></a></li>
+      <li><a href="notes.html"     class="nav-item"><span class="nav-icon">◈</span><span>Notes</span></a></li>
+    </ul>
+    <div class="sidebar-footer" style="flex-direction:column;align-items:flex-start;gap:8px">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="user-avatar">?</div>
+        <div class="user-info">
+          <span class="user-name">Loading…</span>
+          <span class="user-role">PrepTracker</span>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <main class="main-content">
+    <header class="top-header">
+      <div class="header-left">
+        <button class="menu-btn" onclick="toggleSidebar()">☰</button>
+        <div>
+          <h1 class="page-title">Dashboard</h1>
+          <p class="page-sub" id="welcome-sub">Welcome back!</p>
+        </div>
+      </div>
+      <div class="header-right">
+        <div class="streak-badge" id="streak-badge">🔥 — Day Streak</div>
+        <div class="notif-btn">🔔</div>
+      </div>
+    </header>
+
+    <!-- Readiness Score Hero -->
+    <section class="hero-section">
+      <div class="readiness-card">
+        <div class="readiness-ring-wrap">
+          <canvas id="readinessChart" width="160" height="160"></canvas>
+          <div class="readiness-center">
+            <span class="readiness-num" id="readiness-num">—</span>
+            <span class="readiness-label">/ 100</span>
+          </div>
+        </div>
+        <div class="readiness-info">
+          <h2 class="readiness-title">Placement Readiness Score</h2>
+          <p class="readiness-desc" id="readiness-desc">Fetching your data…</p>
+          <div class="readiness-pills">
+            <span class="pill pill-green"  id="pill-technical">Technical: —</span>
+            <span class="pill pill-yellow" id="pill-aptitude">Aptitude: —</span>
+            <span class="pill pill-blue"   id="pill-soft">Soft Skills: —</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon" style="background:rgba(122,63,145,0.3)">🎯</div>
+          <div class="stat-val" id="dash-goals-stat">—</div>
+          <div class="stat-lbl">Goals Done / Total</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:rgba(94,206,160,0.2)">🏢</div>
+          <div class="stat-val" id="dash-companies-stat">—</div>
+          <div class="stat-lbl">Companies Tracked</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:rgba(155,89,201,0.3)">📝</div>
+          <div class="stat-val" id="dash-notes-stat">—</div>
+          <div class="stat-lbl">Notes Written</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:rgba(232,195,106,0.2)">🎉</div>
+          <div class="stat-val" id="dash-offers-stat">—</div>
+          <div class="stat-lbl">Offers Received</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Charts Row -->
+    <section class="charts-row">
+      <div class="chart-card wide">
+        <div class="chart-header">
+          <h3>Weekly Activity</h3>
+          <span class="chart-sub">Goals completed per day this week</span>
+        </div>
+        <canvas id="weeklyChart" height="120"></canvas>
+      </div>
+      <div class="chart-card">
+        <div class="chart-header">
+          <h3>Goal Categories</h3>
+          <span class="chart-sub">Distribution by type</span>
+        </div>
+        <canvas id="skillPieChart" height="180"></canvas>
+      </div>
+    </section>
+
+    <!-- Bottom Row -->
+    <section class="bottom-row">
+      <div class="list-card">
+        <div class="chart-header">
+          <h3>Today's Goals</h3>
+          <a href="goals.html" class="view-all">View All →</a>
+        </div>
+        <ul class="goal-list" id="dash-goals-list">
+          <li class="goal-item"><span class="g-check empty"></span><span style="color:var(--text-muted)">Loading…</span></li>
+        </ul>
+      </div>
+
+      <div class="list-card">
+        <div class="chart-header">
+          <h3>Company Pipeline</h3>
+          <a href="companies.html" class="view-all">View All →</a>
+        </div>
+        <ul class="company-list" id="dash-company-list">
+          <li style="color:var(--text-muted);font-size:13px;padding:12px 0">Loading…</li>
+        </ul>
+      </div>
+
+      <div class="chart-card radar-card">
+        <div class="chart-header">
+          <h3>Goal Radar</h3>
+          <span class="chart-sub">Done vs Pending by category</span>
+        </div>
+        <canvas id="radarChart" height="200"></canvas>
+      </div>
+    </section>
+  </main>
+
+  <script src="js/api.js"></script>
+  <script src="app.js"></script>
+  <script>
+  (function () {
+    if (!PTAuth.requireAuth()) return;
+    PTAuth.applyShell();
+
+    // Set welcome text from stored user immediately (no flicker)
+    const u = PTAuth.getUser();
+    if (u && u.name) {
+      const first = u.name.trim().split(/\s+/)[0];
+      document.getElementById('welcome-sub').textContent = `Welcome back, ${first}. You're on track!`;
+    }
+
+    function esc(s) {
+      const d = document.createElement('div');
+      d.textContent = s == null ? '' : String(s);
+      return d.innerHTML;
+    }
+
+    // ── Init charts with empty data ───────────────────────────
+    const readinessChart = new Chart(document.getElementById('readinessChart'), {
+      type: 'doughnut',
+      data: { datasets: [{ data: [0, 100], backgroundColor: ['#7A3F91', '#1e1e2e'], borderWidth: 0, circumference: 300, rotation: -150 }] },
+      options: { cutout: '78%', plugins: { legend: { display: false }, tooltip: { enabled: false } } }
+    });
+
+    const weeklyChart = new Chart(document.getElementById('weeklyChart'), {
+      type: 'bar',
+      data: {
+        labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+        datasets: [{ label: 'Goals Done', data: [0,0,0,0,0,0,0], backgroundColor: '#7A3F91', borderRadius: 8, borderSkipped: false }]
+      },
+      options: {
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { grid: { display: false }, ticks: { color: '#888' } },
+          y: { grid: { color: '#1e1e2e' }, ticks: { color: '#888' }, beginAtZero: true }
+        }
+      }
+    });
+
+    const pieChart = new Chart(document.getElementById('skillPieChart'), {
+      type: 'pie',
+      data: {
+        labels: ['DSA', 'System Design', 'CS', 'Aptitude', 'Soft Skills'],
+        datasets: [{ data: [0,0,0,0,0], backgroundColor: ['#7A3F91','#C59DD9','#3b82f6','#E8C36A','#5ECEA0'], borderWidth: 2, borderColor: '#0f0f1a' }]
+      },
+      options: { plugins: { legend: { position: 'bottom', labels: { color: '#C59DD9', boxWidth: 12, padding: 10 } } } }
+    });
+
+    const radarChart = new Chart(document.getElementById('radarChart'), {
+      type: 'radar',
+      data: {
+        labels: ['DSA', 'SD', 'CS', 'Aptitude', 'Soft Skills'],
+        datasets: [
+          { label: 'Done',    data: [0,0,0,0,0], backgroundColor: 'rgba(122,63,145,0.25)', borderColor: '#7A3F91', pointBackgroundColor: '#7A3F91' },
+          { label: 'Pending', data: [0,0,0,0,0], backgroundColor: 'rgba(197,157,217,0.1)',  borderColor: '#C59DD9', pointBackgroundColor: '#C59DD9', borderDash: [5,5] }
+        ]
+      },
+      options: {
+        scales: { r: { angleLines: { color: '#2a2a3e' }, grid: { color: '#2a2a3e' }, pointLabels: { color: '#C59DD9' }, ticks: { display: false }, min: 0 } },
+        plugins: { legend: { labels: { color: '#C59DD9', boxWidth: 10 } } }
+      }
+    });
+
+    // ── Fetch everything from /api/dashboard in ONE call ─────
+    async function loadDashboard() {
+      try {
+        const d = await PTAuth.api('/api/dashboard');
+
+        // ── Streak ──────────────────────────────────────────
+        document.getElementById('streak-badge').textContent = `🔥 ${d.streak} Day Streak`;
+
+        // ── Stat cards ──────────────────────────────────────
+        document.getElementById('dash-goals-stat').textContent     = `${d.goalsDone}/${d.goalsTotal}`;
+        document.getElementById('dash-companies-stat').textContent = d.companiesTotal;
+        document.getElementById('dash-notes-stat').textContent     = d.notesTotal;
+        document.getElementById('dash-offers-stat').textContent    = d.offersCount;
+
+        // ── Readiness score ─────────────────────────────────
+        document.getElementById('readiness-num').textContent       = d.readiness;
+        document.getElementById('pill-technical').textContent      = `Technical: ${d.technical}%`;
+        document.getElementById('pill-aptitude').textContent       = `Aptitude: ${d.aptitude}%`;
+        document.getElementById('pill-soft').textContent           = `Soft Skills: ${d.soft}%`;
+
+        let desc = 'Add some goals to start tracking your progress!';
+        if (d.goalsTotal > 0) {
+          if      (d.readiness >= 80) desc = "Outstanding! You're nearly placement-ready. Keep it up!";
+          else if (d.readiness >= 60) desc = "Good progress! Focus on weaker categories to boost your score.";
+          else if (d.readiness >= 40) desc = "Decent start! Stay consistent and complete more goals each day.";
+          else                        desc = "Just getting started — consistency is key. Let's go!";
+        }
+        document.getElementById('readiness-desc').textContent = desc;
+
+        readinessChart.data.datasets[0].data = [d.readiness, 100 - d.readiness];
+        readinessChart.update();
+
+        // ── Weekly bar ──────────────────────────────────────
+        const wa = d.weeklyActivity;
+        weeklyChart.data.datasets[0].data            = wa.counts;
+        weeklyChart.data.datasets[0].backgroundColor = wa.counts.map((_, i) =>
+          i === wa.todayIndex ? '#C59DD9' : '#7A3F91'
+        );
+        weeklyChart.update();
+
+        // ── Category pie ────────────────────────────────────
+        const cats = ['dsa','sd','cs','apt','hr'];
+        pieChart.data.datasets[0].data = cats.map(c => (d.catBreakdown[c] || {}).total || 0);
+        pieChart.update();
+
+        // ── Radar ───────────────────────────────────────────
+        radarChart.data.datasets[0].data = cats.map(c => (d.catBreakdown[c] || {}).done    || 0);
+        radarChart.data.datasets[1].data = cats.map(c => (d.catBreakdown[c] || {}).pending || 0);
+        radarChart.update();
+
+        // ── Today's Goals list ──────────────────────────────
+        const goalsList = document.getElementById('dash-goals-list');
+        if (!d.todayGoals.length) {
+          goalsList.innerHTML = `<li class="goal-item"><span class="g-check empty"></span><span>No goals today — </span><a href="goals.html" style="color:var(--lilac)">add one!</a></li>`;
+        } else {
+          const tagMap = { dsa:'dsa', sd:'sd', cs:'cs', apt:'apt', hr:'hr' };
+          goalsList.innerHTML = d.todayGoals.map(g => {
+            const done = g.status === 'done';
+            const tag  = tagMap[g.category] || 'cs';
+            return `
+              <li class="goal-item ${done ? 'done' : ''}">
+                <span class="g-check ${done ? '' : 'empty'}">${done ? '✓' : ''}</span>
+                <span style="${done ? 'text-decoration:line-through;opacity:0.55' : ''}">${esc(g.goalTitle)}</span>
+                <span class="g-tag ${tag}">${esc((g.category||'').toUpperCase())}</span>
+              </li>`;
+          }).join('');
+        }
+
+        // ── Company Pipeline list ───────────────────────────
+        const coList = document.getElementById('dash-company-list');
+        if (!d.recentCompanies.length) {
+          coList.innerHTML = `<li style="color:var(--text-muted);font-size:13px;padding:12px 0">No companies yet — <a href="companies.html" style="color:var(--lilac)">add one!</a></li>`;
+        } else {
+          const sClass = { prep:'status-prep', applied:'status-applied', interview:'status-interview', offer:'status-offer' };
+          coList.innerHTML = d.recentCompanies.map(c => `
+            <li class="company-item">
+              <div class="co-logo" style="background:${c.color}22;color:${c.color};width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;flex-shrink:0">
+                ${esc(c.emoji || (c.companyName||'?').charAt(0).toUpperCase())}
+              </div>
+              <div class="co-info">
+                <span class="co-name">${esc(c.companyName)}</span>
+                <span class="co-role">${esc(c.role)}</span>
+              </div>
+              <span class="co-status ${sClass[c.applicationStatus]||'status-prep'}">
+                ${esc(c.applicationStatus ? c.applicationStatus.charAt(0).toUpperCase()+c.applicationStatus.slice(1) : 'Prep')}
+              </span>
+            </li>`).join('');
+        }
+
+      } catch (err) {
+        console.error('Dashboard error:', err);
+      }
+    }
+
+    loadDashboard();
+  })();
+  </script>
+</body>
+</html>

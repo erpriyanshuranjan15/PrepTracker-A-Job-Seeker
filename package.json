@@ -1,0 +1,24 @@
+{
+  "name": "preptracker",
+  "version": "1.0.0",
+  "description": "Placement Prep Tracker — Full-Stack Node.js (zero dependencies)",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "keywords": [
+    "placement",
+    "prep",
+    "tracker"
+  ],
+  "author": "Aryan Singh",
+  "license": "MIT",
+  "dependencies": {
+    "install": "^0.13.0",
+    "mongodb": "^6.5.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PrepTracker – Notes</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">PT</div>
+      <span class="logo-text">PrepTracker</span>
+    </div>
+    <ul class="nav-links">
+      <li><a href="dashboard.html" class="nav-item"><span class="nav-icon">⬡</span><span>Dashboard</span></a></li>
+      <li><a href="skills.html"    class="nav-item"><span class="nav-icon">◈</span><span>Skills</span></a></li>
+      <li><a href="goals.html"     class="nav-item"><span class="nav-icon">◎</span><span>Daily Goals</span></a></li>
+      <li><a href="companies.html" class="nav-item"><span class="nav-icon">◷</span><span>Companies</span></a></li>
+      <li><a href="resume.html"    class="nav-item"><span class="nav-icon">◻</span><span>Resume</span></a></li>
+      <li><a href="notes.html"     class="nav-item active"><span class="nav-icon">◈</span><span>Notes</span></a></li>
+    </ul>
+    <div class="sidebar-footer" style="flex-direction:column;align-items:flex-start;gap:8px">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="user-avatar">?</div>
+        <div class="user-info">
+          <span class="user-name">Loading…</span>
+          <span class="user-role">PrepTracker</span>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <main class="main-content">
+    <header class="top-header">
+      <div class="header-left">
+        <button class="menu-btn" onclick="toggleSidebar()">☰</button>
+        <div>
+          <h1 class="page-title">Prep Notes</h1>
+          <p class="page-sub">Your personal knowledge base for placements</p>
+        </div>
+      </div>
+      <div class="header-right">
+        <button class="btn-primary" onclick="newNote()">+ New Note</button>
+      </div>
+    </header>
+
+    <div class="notes-layout">
+      <!-- Notes List -->
+      <div>
+        <div class="notes-sidebar-panel">
+          <input type="text" class="form-input" placeholder="🔍 Search notes..." id="search-notes" oninput="filterNotes(this.value)">
+          <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:14px;">
+            <span class="g-tag dsa" style="cursor:pointer" onclick="filterByTag('DSA')">DSA</span>
+            <span class="g-tag sd"  style="cursor:pointer" onclick="filterByTag('System Design')">SD</span>
+            <span class="g-tag cs"  style="cursor:pointer" onclick="filterByTag('CS Fundamentals')">CS</span>
+            <span class="g-tag apt" style="cursor:pointer" onclick="filterByTag('Aptitude')">APT</span>
+            <span class="g-tag hr"  style="cursor:pointer" onclick="filterByTag('HR')">HR</span>
+            <span class="g-tag cs"  style="cursor:pointer;opacity:0.6" onclick="clearTagFilter()">✕ All</span>
+          </div>
+          <ul class="notes-list" id="notes-list"></ul>
+        </div>
+      </div>
+
+      <!-- Editor -->
+      <div class="notes-editor">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+          <select class="form-select" id="note-tag" style="width:auto;font-size:12px;padding:6px 10px">
+            <option>DSA</option>
+            <option>System Design</option>
+            <option>CS Fundamentals</option>
+            <option>Aptitude</option>
+            <option>HR</option>
+            <option>Company Specific</option>
+            <option>General</option>
+          </select>
+          <span id="note-save-status" style="font-size:12px;color:#22c55e;opacity:0;transition:opacity 0.3s">✓ Saved</span>
+          <div style="margin-left:auto;display:flex;gap:8px">
+            <button class="btn-secondary" style="font-size:12px;padding:6px 12px" onclick="deleteCurrentNote()">🗑 Delete</button>
+            <button class="btn-primary"   style="font-size:12px;padding:6px 12px" onclick="saveNote()">Save</button>
+          </div>
+        </div>
+        <input type="text"  class="note-title-input" id="note-title" placeholder="Note title...">
+        <textarea class="note-body-input" id="note-body"
+          placeholder="Start writing your prep notes here...
+
+Tips:
+- Break down complex topics into smaller points
+- Add examples and code snippets
+- Mark important sections with capitals
+- Review notes the night before an interview"
+          oninput="autoSave()"></textarea>
+      </div>
+    </div>
+  </main>
+
+  <script src="js/api.js"></script>
+  <script src="app.js"></script>
+  <script>
+  (function(){
+    if(!PTAuth.requireAuth()) return;
+    PTAuth.applyShell();
+
+    let notes=[], currentNoteId=null, listFilter=null;
+
+    function esc(s){ const d=document.createElement('div');d.textContent=s==null?'':String(s);return d.innerHTML; }
+
+    function mapNote(doc){
+      const d=doc.updatedAt||doc.createdAt;
+      return { _id:doc._id, title:doc.title, tag:doc.tag||'General', body:doc.content||'',
+        date:d?new Date(d).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'' };
+    }
+
+    function tagClass(tag){
+      return {DSA:'dsa','System Design':'sd','CS Fundamentals':'cs',Aptitude:'apt',HR:'hr','Company Specific':'hr',General:'cs'}[tag]||'cs';
+    }
+
+    function renderList(filtered){
+      const src=filtered!=null?filtered:listFilter?notes.filter(n=>n.tag===listFilter):notes;
+      document.getElementById('notes-list').innerHTML=src.map(n=>`
+        <li class="note-list-item ${n._id===currentNoteId?'active':''}" onclick="openNote('${n._id}')">
+          <div class="note-list-title">${esc(n.title)}</div>
+          <div class="note-list-preview" style="display:flex;gap:6px;align-items:center">
+            <span class="g-tag ${tagClass(n.tag)}" style="font-size:9px">${esc(n.tag)}</span>
+            <span>${esc(n.date)}</span>
+          </div>
+        </li>`).join('');
+    }
+
+    async function loadNotes(){
+      try{ notes=(await PTAuth.api('/api/notes')||[]).map(mapNote); }
+      catch(e){ alert(e.message); notes=[]; }
+      listFilter=null;
+      renderList();
+      if(notes.length) openNote(notes[0]._id);
+      else { currentNoteId=null; document.getElementById('note-title').value=''; document.getElementById('note-body').value=''; }
+    }
+
+    window.openNote=function(id){
+      const n=notes.find(x=>x._id===id); if(!n) return;
+      currentNoteId=id;
+      document.getElementById('note-title').value=n.title;
+      document.getElementById('note-body').value=n.body;
+      document.getElementById('note-tag').value=n.tag;
+      renderList();
+    };
+
+    window.saveNote=async function(){
+      if(!currentNoteId) return;
+      const title=document.getElementById('note-title').value.trim()||'Untitled';
+      const content=document.getElementById('note-body').value;
+      const tag=document.getElementById('note-tag').value;
+      try{
+        const updated=await PTAuth.api(`/api/notes/${currentNoteId}`,{method:'PUT',body:JSON.stringify({title,content,tag})});
+        const m=mapNote(updated);
+        const i=notes.findIndex(x=>x._id===currentNoteId);
+        if(i>=0) notes[i]=m; else notes.unshift(m);
+        renderList(); showSaved();
+      }catch(e){alert(e.message);}
+    };
+
+    let saveTimer;
+    window.autoSave=function(){ clearTimeout(saveTimer); saveTimer=setTimeout(saveNote,1500); };
+
+    function showSaved(){ const s=document.getElementById('note-save-status'); s.style.opacity='1'; setTimeout(()=>s.style.opacity='0',2000); }
+
+    window.newNote=async function(){
+      try{
+        const created=await PTAuth.api('/api/notes',{method:'POST',body:JSON.stringify({title:'New Note',content:'',tag:'General'})});
+        const m=mapNote(created);
+        notes.unshift(m); currentNoteId=m._id; listFilter=null;
+        renderList(); openNote(m._id);
+        document.getElementById('note-title').focus();
+        document.getElementById('note-title').select();
+      }catch(e){alert(e.message);}
+    };
+
+    window.deleteCurrentNote=async function(){
+      if(!currentNoteId||!confirm('Delete this note?')) return;
+      try{
+        await PTAuth.api(`/api/notes/${currentNoteId}`,{method:'DELETE'});
+        notes=notes.filter(n=>n._id!==currentNoteId);
+        listFilter=null;
+        if(notes.length) openNote(notes[0]._id);
+        else{ currentNoteId=null; document.getElementById('note-title').value=''; document.getElementById('note-body').value=''; }
+        renderList();
+      }catch(e){alert(e.message);}
+    };
+
+    window.filterNotes=function(q){
+      listFilter=null;
+      const qq=(q||'').trim().toLowerCase();
+      if(!qq){ renderList(); return; }
+      renderList(notes.filter(n=>(n.title&&n.title.toLowerCase().includes(qq))||(n.body&&n.body.toLowerCase().includes(qq))));
+    };
+
+    window.filterByTag=function(tag){ listFilter=tag; renderList(notes.filter(n=>n.tag===tag)); };
+    window.clearTagFilter=function(){ listFilter=null; renderList(); };
+
+    loadNotes();
+  })();
+  </script>
+</body>
+</html>

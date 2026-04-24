@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PrepTracker – Skills</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">PT</div>
+      <span class="logo-text">PrepTracker</span>
+    </div>
+    <ul class="nav-links">
+      <li><a href="dashboard.html" class="nav-item"><span class="nav-icon">⬡</span><span>Dashboard</span></a></li>
+      <li><a href="skills.html"    class="nav-item active"><span class="nav-icon">◈</span><span>Skills</span></a></li>
+      <li><a href="goals.html"     class="nav-item"><span class="nav-icon">◎</span><span>Daily Goals</span></a></li>
+      <li><a href="companies.html" class="nav-item"><span class="nav-icon">◷</span><span>Companies</span></a></li>
+      <li><a href="resume.html"    class="nav-item"><span class="nav-icon">◻</span><span>Resume</span></a></li>
+      <li><a href="notes.html"     class="nav-item"><span class="nav-icon">◈</span><span>Notes</span></a></li>
+    </ul>
+    <div class="sidebar-footer" style="flex-direction:column;align-items:flex-start;gap:8px">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="user-avatar">?</div>
+        <div class="user-info">
+          <span class="user-name">Loading…</span>
+          <span class="user-role">PrepTracker</span>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <main class="main-content">
+    <header class="top-header">
+      <div class="header-left">
+        <button class="menu-btn" onclick="toggleSidebar()">☰</button>
+        <div>
+          <h1 class="page-title">Skills Tracker</h1>
+          <p class="page-sub">Monitor your preparation across all domains</p>
+        </div>
+      </div>
+      <div class="header-right">
+        <div class="streak-badge" id="streak-badge">🔥 — Day Streak</div>
+        <button class="btn-primary" onclick="openAddSkill()">+ Add Skill</button>
+      </div>
+    </header>
+
+    <!-- Overview Charts -->
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;margin-bottom:28px;">
+      <div class="chart-card" style="grid-column:span 2">
+        <div class="chart-header">
+          <h3>Skills Progress Overview</h3>
+          <span class="chart-sub">Top skills current %</span>
+        </div>
+        <canvas id="skillBarChart" height="130"></canvas>
+      </div>
+      <div class="chart-card">
+        <div class="chart-header"><h3>Readiness Breakdown</h3></div>
+        <canvas id="readinessDoughnut" height="170"></canvas>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:12px;">
+          <span class="pill pill-green"  id="pill-tech"  style="font-size:11px;">Technical —%</span>
+          <span class="pill pill-yellow" id="pill-apt"   style="font-size:11px;">Aptitude —%</span>
+          <span class="pill pill-blue"   id="pill-soft"  style="font-size:11px;">Soft —%</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Skill Categories -->
+    <div class="skills-grid">
+      <div class="skill-category-card">
+        <div class="skill-cat-header">
+          <div class="skill-cat-icon" style="background:rgba(122,63,145,0.2)">🧮</div>
+          <div>
+            <div class="skill-cat-title">Data Structures & Algorithms</div>
+            <div class="skill-cat-count" id="dsa-meta">0 skills</div>
+          </div>
+        </div>
+        <div id="dsa-skills"></div>
+      </div>
+      <div class="skill-category-card">
+        <div class="skill-cat-header">
+          <div class="skill-cat-icon" style="background:rgba(155,89,201,0.2)">🏗️</div>
+          <div>
+            <div class="skill-cat-title">System Design</div>
+            <div class="skill-cat-count" id="sd-meta">0 skills</div>
+          </div>
+        </div>
+        <div id="sd-skills"></div>
+      </div>
+      <div class="skill-category-card">
+        <div class="skill-cat-header">
+          <div class="skill-cat-icon" style="background:rgba(59,130,246,0.15)">💻</div>
+          <div>
+            <div class="skill-cat-title">CS Fundamentals</div>
+            <div class="skill-cat-count" id="cs-meta">0 skills</div>
+          </div>
+        </div>
+        <div id="cs-skills"></div>
+      </div>
+      <div class="skill-category-card">
+        <div class="skill-cat-header">
+          <div class="skill-cat-icon" style="background:rgba(245,158,11,0.15)">🔢</div>
+          <div>
+            <div class="skill-cat-title">Aptitude & Quant</div>
+            <div class="skill-cat-count" id="apt-meta">0 skills</div>
+          </div>
+        </div>
+        <div id="apt-skills"></div>
+      </div>
+      <div class="skill-category-card">
+        <div class="skill-cat-header">
+          <div class="skill-cat-icon" style="background:rgba(34,197,94,0.15)">🗣️</div>
+          <div>
+            <div class="skill-cat-title">Soft Skills</div>
+            <div class="skill-cat-count" id="soft-meta">0 skills</div>
+          </div>
+        </div>
+        <div id="soft-skills"></div>
+      </div>
+      <div class="skill-category-card">
+        <div class="skill-cat-header">
+          <div class="skill-cat-icon" style="background:rgba(78,205,196,0.15)">📈</div>
+          <div>
+            <div class="skill-cat-title">Category Averages</div>
+            <div class="skill-cat-count">Live from your data</div>
+          </div>
+        </div>
+        <canvas id="trendChart" height="160"></canvas>
+      </div>
+    </div>
+
+    <!-- Checklist -->
+    <div class="chart-card" style="margin-top:24px;">
+      <div class="chart-header">
+        <h3>Core Topics Checklist</h3>
+        <span class="chart-sub" id="chk-progress">0 / 20 completed</span>
+      </div>
+      <div id="checklist-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:4px;"></div>
+    </div>
+  </main>
+
+  <!-- Add/Edit Skill Modal -->
+  <div class="modal-overlay" id="skill-modal">
+    <div class="modal">
+      <div class="modal-title" id="skill-modal-title">Add Skill</div>
+      <input type="hidden" id="skill-id">
+      <div class="form-group">
+        <label class="form-label">Skill Name</label>
+        <input type="text" class="form-input" id="skill-name" placeholder="e.g., Arrays & Strings">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Category</label>
+        <select class="form-select" id="skill-cat">
+          <option value="dsa">DSA</option>
+          <option value="sd">System Design</option>
+          <option value="cs">CS Fundamentals</option>
+          <option value="apt">Aptitude</option>
+          <option value="soft">Soft Skills</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Proficiency: <span id="pct-display">50</span>%</label>
+        <input type="range" id="skill-pct" min="0" max="100" value="50"
+          style="width:100%;accent-color:#7A3F91;margin-top:8px"
+          oninput="document.getElementById('pct-display').textContent=this.value">
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" onclick="closeSkillModal()">Cancel</button>
+        <button class="btn-primary" onclick="saveSkill()">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script src="app.js"></script>
+  <script>
+  (function(){
+    if(!PTAuth.requireAuth()) return;
+    PTAuth.applyShell();
+
+    let skillsData = [];
+    let checkedTopics = {};
+    let barChart, doughnutChart, trendChart;
+
+    const TOPICS = ['Arrays','Sorting','BFS/DFS','Heaps','Tries','Segment Trees',"Kadane's",'Two Pointers','Binary Search','Sliding Window','Union Find',"Floyd's Cycle",'KMP Algorithm','Z-algorithm','Topological Sort',"Dijkstra's",'Bellman-Ford','Floyd-Warshall','Knapsack','LCS'];
+    const COLORS  = {dsa:'#7A3F91',sd:'#C59DD9',cs:'#3b82f6',apt:'#E8C36A',soft:'#5ECEA0'};
+    const CAT_IDS = {dsa:'dsa-skills',sd:'sd-skills',cs:'cs-skills',apt:'apt-skills',soft:'soft-skills'};
+    const META_IDS= {dsa:'dsa-meta',sd:'sd-meta',cs:'cs-meta',apt:'apt-meta',soft:'soft-meta'};
+
+    function esc(s){const d=document.createElement('div');d.textContent=s==null?'':String(s);return d.innerHTML;}
+
+    function avg(arr){ return arr.length?Math.round(arr.reduce((a,b)=>a+b,0)/arr.length):0; }
+
+    function renderCategory(cat) {
+      const items = skillsData.filter(s=>s.category===cat);
+      const el    = document.getElementById(CAT_IDS[cat]);
+      const meta  = document.getElementById(META_IDS[cat]);
+      const a     = avg(items.map(s=>s.pct));
+      if(meta) meta.textContent = `${items.length} skill${items.length!==1?'s':''} · avg ${a}%`;
+      if(!el) return;
+      if(!items.length){
+        el.innerHTML=`<div style="color:var(--text-muted);font-size:12px;padding:8px 0">No skills yet. <button onclick="openAddSkill('${cat}')" style="background:none;border:none;color:var(--lilac);cursor:pointer;font-size:12px">+ Add one</button></div>`;
+        return;
+      }
+      el.innerHTML = items.map(s=>`
+        <div class="skill-item" style="cursor:pointer" onclick="openEditSkill('${s._id}')">
+          <div class="skill-row">
+            <span style="font-size:13px">${esc(s.name)}</span>
+            <span class="skill-pct" style="color:${s.color}">${s.pct}%</span>
+          </div>
+          <div class="skill-bar-bg">
+            <div class="skill-bar-fill" style="width:${s.pct}%;background:${s.color};transition:width 0.6s ease"></div>
+          </div>
+        </div>`).join('');
+    }
+
+    function updateCharts() {
+      // Bar: top 10 skills by pct desc
+      const top10 = [...skillsData].sort((a,b)=>b.pct-a.pct).slice(0,10);
+      if(barChart) {
+        barChart.data.labels = top10.map(s=>s.name.length>10?s.name.slice(0,10)+'…':s.name);
+        barChart.data.datasets[0].data = top10.map(s=>s.pct);
+        barChart.data.datasets[0].backgroundColor = top10.map(s=>s.color);
+        barChart.update();
+      }
+
+      // Doughnut + pills
+      const cats=['dsa','sd','cs','apt','soft'];
+      const avgs=cats.map(c=>avg(skillsData.filter(s=>s.category===c).map(s=>s.pct)));
+      const tech=Math.round((avgs[0]+avgs[1]+avgs[2])/3);
+      const apt=avgs[3]; const soft=avgs[4];
+      document.getElementById('pill-tech').textContent =`Technical ${tech}%`;
+      document.getElementById('pill-apt').textContent  =`Aptitude ${apt}%`;
+      document.getElementById('pill-soft').textContent =`Soft ${soft}%`;
+      if(doughnutChart){doughnutChart.data.datasets[0].data=[tech,apt,soft];doughnutChart.update();}
+
+      // Trend (horizontal bar: category averages)
+      if(trendChart){
+        trendChart.data.datasets[0].data=avgs;
+        trendChart.update();
+      }
+
+      // Streak from dashboard
+      PTAuth.api('/api/dashboard').then(d=>{
+        document.getElementById('streak-badge').textContent=`🔥 ${d.streak} Day Streak`;
+      }).catch(()=>{});
+    }
+
+    function renderAll() {
+      Object.keys(CAT_IDS).forEach(renderCategory);
+      updateCharts();
+    }
+
+    // ── Charts init ──────────────────────────
+    barChart = new Chart(document.getElementById('skillBarChart'),{
+      type:'bar',
+      data:{labels:[],datasets:[{label:'Proficiency %',data:[],backgroundColor:'#7A3F91',borderRadius:6}]},
+      options:{plugins:{legend:{labels:{color:'#C59DD9',boxWidth:10}}},scales:{x:{grid:{display:false},ticks:{color:'rgba(197,157,217,0.45)',font:{size:11}}},y:{grid:{color:'rgba(197,157,217,0.08)'},ticks:{color:'rgba(197,157,217,0.45)'},max:100,beginAtZero:true}}}
+    });
+    doughnutChart = new Chart(document.getElementById('readinessDoughnut'),{
+      type:'doughnut',
+      data:{labels:['Technical','Aptitude','Soft Skills'],datasets:[{data:[0,0,0],backgroundColor:['#7A3F91','#E8C36A','#5ECEA0'],borderWidth:2,borderColor:'#1A0828'}]},
+      options:{plugins:{legend:{display:false}},cutout:'65%'}
+    });
+    trendChart = new Chart(document.getElementById('trendChart'),{
+      type:'bar',
+      data:{labels:['DSA','Sys Design','CS','Aptitude','Soft'],datasets:[{label:'Avg %',data:[0,0,0,0,0],backgroundColor:['#7A3F91','#C59DD9','#3b82f6','#E8C36A','#5ECEA0'],borderRadius:6}]},
+      options:{indexAxis:'y',plugins:{legend:{display:false}},scales:{x:{grid:{color:'rgba(197,157,217,0.08)'},ticks:{color:'rgba(197,157,217,0.45)'},max:100},y:{grid:{display:false},ticks:{color:'#C59DD9',font:{size:11}}}}}
+    });
+
+    // ── Load skills from MongoDB ─────────────
+    async function loadSkills() {
+      try {
+        skillsData = await PTAuth.api('/api/skills');
+      } catch(e) { skillsData=[]; }
+      renderAll();
+    }
+
+    // ── Checklist ────────────────────────────
+    async function loadChecklist() {
+      try {
+        const r=await PTAuth.api('/api/checklist');
+        checkedTopics=r.checked||{};
+      } catch{ checkedTopics={}; }
+      renderChecklist();
+    }
+    function renderChecklist() {
+      const done=TOPICS.filter(t=>checkedTopics[t]).length;
+      document.getElementById('chk-progress').textContent=`${done} / ${TOPICS.length} completed`;
+      const grid=document.getElementById('checklist-grid');
+      grid.innerHTML=TOPICS.map((t,i)=>`
+        <label style="display:flex;align-items:center;gap:8px;padding:10px 14px;background:var(--surface2);border-radius:10px;cursor:pointer;border:1px solid var(--border);">
+          <input type="checkbox" id="chk-${i}" ${checkedTopics[t]?'checked':''} onchange="toggleTopic('${t}',this.checked)" style="accent-color:#C59DD9;width:14px;height:14px">
+          <span id="chk-lbl-${i}" style="${checkedTopics[t]?'text-decoration:line-through;color:#555':''}">${t}</span>
+        </label>`).join('');
+    }
+    window.toggleTopic=async function(name,checked) {
+      checkedTopics[name]=checked;
+      const idx=TOPICS.indexOf(name);
+      const lbl=document.getElementById(`chk-lbl-${idx}`);
+      if(lbl) lbl.style.cssText=checked?'text-decoration:line-through;color:#555':'';
+      const done=TOPICS.filter(t=>checkedTopics[t]).length;
+      document.getElementById('chk-progress').textContent=`${done} / ${TOPICS.length} completed`;
+      try{ await PTAuth.api('/api/checklist',{method:'PUT',body:JSON.stringify({checked:checkedTopics})}); }catch{}
+    };
+
+    // ── Add / Edit skill modal ────────────────
+    window.openAddSkill=function(defaultCat) {
+      document.getElementById('skill-modal-title').textContent='Add Skill';
+      document.getElementById('skill-id').value='';
+      document.getElementById('skill-name').value='';
+      document.getElementById('skill-cat').value=defaultCat||'dsa';
+      document.getElementById('skill-pct').value=50;
+      document.getElementById('pct-display').textContent=50;
+      document.getElementById('skill-modal').classList.add('open');
+    };
+    window.openEditSkill=function(id) {
+      const s=skillsData.find(x=>x._id===id);
+      if(!s) return;
+      document.getElementById('skill-modal-title').textContent='Edit Skill';
+      document.getElementById('skill-id').value=s._id;
+      document.getElementById('skill-name').value=s.name;
+      document.getElementById('skill-cat').value=s.category;
+      document.getElementById('skill-pct').value=s.pct;
+      document.getElementById('pct-display').textContent=s.pct;
+      document.getElementById('skill-modal').classList.add('open');
+    };
+    window.closeSkillModal=function(){document.getElementById('skill-modal').classList.remove('open');};
+
+    window.saveSkill=async function() {
+      const id   =document.getElementById('skill-id').value;
+      const name =document.getElementById('skill-name').value.trim();
+      const category=document.getElementById('skill-cat').value;
+      const pct  =Number(document.getElementById('skill-pct').value);
+      if(!name) return alert('Enter a skill name');
+      try {
+        if(id) {
+          const updated=await PTAuth.api(`/api/skills/${id}`,{method:'PUT',body:JSON.stringify({name,category,pct})});
+          const i=skillsData.findIndex(x=>x._id===id);
+          if(i>=0) skillsData[i]=updated;
+        } else {
+          const created=await PTAuth.api('/api/skills',{method:'POST',body:JSON.stringify({name,category,pct})});
+          skillsData.push(created);
+        }
+        closeSkillModal();
+        renderAll();
+      } catch(e){ alert(e.message); }
+    };
+
+    // Delete on long-press / right-click hint handled via edit modal (future enhancement)
+
+    loadSkills();
+    loadChecklist();
+  })();
+  </script>
+</body>
+</html>

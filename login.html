@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PrepTracker – Sign In</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    /* Reset body layout for auth page — no sidebar needed */
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      background: var(--bg);
+      padding: 24px;
+    }
+
+    /* Ambient glow blobs */
+    body::before {
+      content: '';
+      position: fixed;
+      top: -120px; left: -120px;
+      width: 480px; height: 480px;
+      background: radial-gradient(circle, rgba(122,63,145,0.18) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .auth-wrap {
+      width: 100%;
+      max-width: 440px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Brand header above card */
+    .auth-brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      justify-content: center;
+      margin-bottom: 28px;
+    }
+    .auth-brand-icon {
+      width: 48px; height: 48px;
+      background: linear-gradient(135deg, var(--amethyst), var(--accent));
+      border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      font-family: Georgia, serif;
+      font-weight: 700; font-size: 18px;
+      color: var(--pale);
+      box-shadow: 0 8px 24px rgba(122,63,145,0.35);
+    }
+    .auth-brand-name {
+      font-family: Georgia, serif;
+      font-size: 26px; font-weight: 700;
+      color: var(--text);
+      letter-spacing: 0.01em;
+    }
+    .auth-brand-tag {
+      font-size: 12px; color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    /* Card */
+    .auth-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      padding: 36px;
+      box-shadow: 0 32px 80px rgba(0,0,0,0.5), 0 0 60px rgba(122,63,145,0.08);
+    }
+
+    /* Tabs */
+    .auth-tabs {
+      display: flex;
+      background: var(--surface2);
+      border-radius: 12px;
+      padding: 4px;
+      margin-bottom: 28px;
+      gap: 4px;
+    }
+    .auth-tab {
+      flex: 1;
+      padding: 10px;
+      border-radius: 9px;
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      font-size: 14px; font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s;
+      font-family: inherit;
+    }
+    .auth-tab.active {
+      background: linear-gradient(135deg, rgba(122,63,145,0.4), rgba(155,89,201,0.25));
+      color: var(--pale);
+      box-shadow: 0 2px 8px rgba(122,63,145,0.2);
+    }
+
+    .auth-panel { display: none; }
+    .auth-panel.active { display: block; }
+
+    .auth-title {
+      font-family: Georgia, serif;
+      font-size: 22px; font-weight: 700;
+      color: var(--pale);
+      margin-bottom: 6px;
+    }
+    .auth-hint {
+      font-size: 13px; color: var(--text-muted);
+      margin-bottom: 22px; line-height: 1.5;
+    }
+
+    .btn-auth {
+      width: 100%; margin-top: 10px;
+      padding: 13px;
+      background: linear-gradient(135deg, var(--amethyst), var(--accent));
+      color: var(--pale);
+      border: none; border-radius: 12px;
+      font-size: 15px; font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      box-shadow: 0 4px 20px rgba(122,63,145,0.35);
+      transition: opacity 0.2s, transform 0.15s;
+    }
+    .btn-auth:hover { opacity: 0.9; transform: translateY(-1px); }
+    .btn-auth:active { transform: translateY(0); }
+
+    .error-msg {
+      background: rgba(224,112,112,0.12);
+      border: 1px solid rgba(224,112,112,0.3);
+      color: #E07070;
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: 13px;
+      margin-top: 12px;
+      display: none;
+    }
+    .error-msg.show { display: block; }
+
+    .auth-footer {
+      text-align: center;
+      margin-top: 24px;
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+    .auth-footer a { color: var(--lilac); text-decoration: none; }
+    .auth-footer a:hover { text-decoration: underline; }
+
+    /* Advanced / API base URL — collapsed by default */
+    .auth-advanced summary {
+      font-size: 12px; color: var(--text-muted);
+      cursor: pointer; margin-top: 18px;
+      user-select: none;
+    }
+    .auth-advanced summary:hover { color: var(--lilac); }
+    .auth-advanced-body { margin-top: 10px; }
+  </style>
+</head>
+<body>
+  <div class="auth-wrap">
+    <!-- Brand -->
+    <div class="auth-brand">
+      <div class="auth-brand-icon">PT</div>
+      <div>
+        <div class="auth-brand-name">PrepTracker</div>
+        <div class="auth-brand-tag">Your placement prep, all in one place</div>
+      </div>
+    </div>
+
+    <!-- Card -->
+    <div class="auth-card">
+      <div class="auth-tabs">
+        <button type="button" class="auth-tab active" id="tab-login"    onclick="showTab('login')">Sign In</button>
+        <button type="button" class="auth-tab"        id="tab-register" onclick="showTab('register')">Register</button>
+      </div>
+
+      <!-- Login -->
+      <div id="panel-login" class="auth-panel active">
+        <div class="auth-title">Welcome back 👋</div>
+        <p class="auth-hint">Sign in to your PrepTracker account.</p>
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input type="email" class="form-input" id="login-email" autocomplete="email" placeholder="you@example.com">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input type="password" class="form-input" id="login-password" autocomplete="current-password" placeholder="••••••••"
+            onkeydown="if(event.key==='Enter') doLogin()">
+        </div>
+        <div class="error-msg" id="login-error"></div>
+        <button class="btn-auth" onclick="doLogin()">Sign In →</button>
+      </div>
+
+      <!-- Register -->
+      <div id="panel-register" class="auth-panel">
+        <div class="auth-title">Create account 🚀</div>
+        <p class="auth-hint">Start tracking your placement prep today. Password must be at least 6 characters.</p>
+        <div class="form-group">
+          <label class="form-label">Full Name</label>
+          <input type="text" class="form-input" id="reg-name" autocomplete="name" placeholder="Aryan Singh">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input type="email" class="form-input" id="reg-email" autocomplete="email" placeholder="you@example.com">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input type="password" class="form-input" id="reg-password" autocomplete="new-password" placeholder="Min 6 characters"
+            onkeydown="if(event.key==='Enter') doRegister()">
+        </div>
+        <div class="error-msg" id="reg-error"></div>
+        <button class="btn-auth" onclick="doRegister()">Create Account →</button>
+      </div>
+
+      <!-- Advanced (API base URL) -->
+      <details class="auth-advanced">
+        <summary>⚙ Advanced settings</summary>
+        <div class="auth-advanced-body">
+          <label class="form-label">API base URL</label>
+          <input type="text" class="form-input" id="api-base" placeholder="http://localhost:3000" style="font-size:12px">
+          <p style="font-size:11px;color:var(--text-muted);margin-top:6px">Leave blank if frontend and backend run on the same origin.</p>
+        </div>
+      </details>
+    </div>
+
+    <div class="auth-footer">
+      <a href="index.html">← Back to home</a>
+    </div>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script>
+    // Init API base field
+    (function(){
+      const el=document.getElementById('api-base');
+      el.value=PTAuth.getBase();
+      el.addEventListener('change',()=>{
+        const v=el.value.trim();
+        PTAuth.setApiBase(v?v.replace(/\/$/,''):'');
+      });
+    })();
+
+    // Already logged in → go to dashboard
+    if(PTAuth.getToken()) location.replace(nextPage());
+
+    function nextPage(){
+      const n=new URLSearchParams(location.search).get('next');
+      return n&&n.endsWith('.html')?n:'dashboard.html';
+    }
+
+    function showTab(which){
+      ['login','register'].forEach(t=>{
+        document.getElementById('tab-'+t).classList.toggle('active',t===which);
+        document.getElementById('panel-'+t).classList.toggle('active',t===which);
+      });
+    }
+
+    function showError(id,msg){
+      const el=document.getElementById(id);
+      el.textContent=msg; el.classList.add('show');
+      setTimeout(()=>el.classList.remove('show'),4000);
+    }
+
+    async function doLogin(){
+      const email=document.getElementById('login-email').value.trim();
+      const password=document.getElementById('login-password').value;
+      if(!email||!password){showError('login-error','Please fill in all fields');return;}
+      try{
+        const data=await PTAuth.api('/api/auth/login',{method:'POST',body:JSON.stringify({email,password})});
+        PTAuth.setSession(data.token,data.user);
+        location.href=nextPage();
+      }catch(e){showError('login-error',e.message);}
+    }
+
+    async function doRegister(){
+      const name=document.getElementById('reg-name').value.trim();
+      const email=document.getElementById('reg-email').value.trim();
+      const password=document.getElementById('reg-password').value;
+      if(!name||!email||!password){showError('reg-error','Please fill in all fields');return;}
+      try{
+        const data=await PTAuth.api('/api/auth/register',{method:'POST',body:JSON.stringify({name,email,password})});
+        PTAuth.setSession(data.token,data.user);
+        location.href=nextPage();
+      }catch(e){showError('reg-error',e.message);}
+    }
+  </script>
+</body>
+</html>
