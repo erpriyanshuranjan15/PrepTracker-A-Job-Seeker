@@ -242,8 +242,17 @@
       });
     })();
 
-    // Already logged in → go to dashboard
-    if(PTAuth.getToken()) location.replace(nextPage());
+    // Already logged in → verify token is still valid first
+    (async function checkExistingSession(){
+      const token = PTAuth.getToken();
+      if(!token) return;
+      try {
+        await PTAuth.api('/api/dashboard');
+        location.replace(nextPage());
+      } catch(e) {
+        PTAuth.clearSession();
+      }
+    })();
 
     function nextPage(){
       const n=new URLSearchParams(location.search).get('next');
