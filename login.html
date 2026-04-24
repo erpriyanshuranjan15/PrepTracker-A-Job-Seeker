@@ -6,6 +6,7 @@
   <title>PrepTracker – Sign In</title>
   <link rel="stylesheet" href="styles.css">
   <style>
+    /* Reset body layout for auth page — no sidebar needed */
     body {
       display: flex;
       align-items: center;
@@ -14,6 +15,8 @@
       background: var(--bg);
       padding: 24px;
     }
+
+    /* Ambient glow blobs */
     body::before {
       content: '';
       position: fixed;
@@ -22,12 +25,15 @@
       background: radial-gradient(circle, rgba(122,63,145,0.18) 0%, transparent 70%);
       pointer-events: none;
     }
+
     .auth-wrap {
       width: 100%;
       max-width: 440px;
       position: relative;
       z-index: 1;
     }
+
+    /* Brand header above card */
     .auth-brand {
       display: flex;
       align-items: center;
@@ -55,6 +61,8 @@
       font-size: 12px; color: var(--text-muted);
       margin-top: 2px;
     }
+
+    /* Card */
     .auth-card {
       background: var(--surface);
       border: 1px solid var(--border);
@@ -62,6 +70,8 @@
       padding: 36px;
       box-shadow: 0 32px 80px rgba(0,0,0,0.5), 0 0 60px rgba(122,63,145,0.08);
     }
+
+    /* Tabs */
     .auth-tabs {
       display: flex;
       background: var(--surface2);
@@ -87,8 +97,10 @@
       color: var(--pale);
       box-shadow: 0 2px 8px rgba(122,63,145,0.2);
     }
+
     .auth-panel { display: none; }
     .auth-panel.active { display: block; }
+
     .auth-title {
       font-family: Georgia, serif;
       font-size: 22px; font-weight: 700;
@@ -99,6 +111,7 @@
       font-size: 13px; color: var(--text-muted);
       margin-bottom: 22px; line-height: 1.5;
     }
+
     .btn-auth {
       width: 100%; margin-top: 10px;
       padding: 13px;
@@ -113,7 +126,7 @@
     }
     .btn-auth:hover { opacity: 0.9; transform: translateY(-1px); }
     .btn-auth:active { transform: translateY(0); }
-    .btn-auth:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
     .error-msg {
       background: rgba(224,112,112,0.12);
       border: 1px solid rgba(224,112,112,0.3);
@@ -125,6 +138,7 @@
       display: none;
     }
     .error-msg.show { display: block; }
+
     .auth-footer {
       text-align: center;
       margin-top: 24px;
@@ -133,6 +147,8 @@
     }
     .auth-footer a { color: var(--lilac); text-decoration: none; }
     .auth-footer a:hover { text-decoration: underline; }
+
+    /* Advanced / API base URL — collapsed by default */
     .auth-advanced summary {
       font-size: 12px; color: var(--text-muted);
       cursor: pointer; margin-top: 18px;
@@ -144,6 +160,7 @@
 </head>
 <body>
   <div class="auth-wrap">
+    <!-- Brand -->
     <div class="auth-brand">
       <div class="auth-brand-icon">PT</div>
       <div>
@@ -152,6 +169,7 @@
       </div>
     </div>
 
+    <!-- Card -->
     <div class="auth-card">
       <div class="auth-tabs">
         <button type="button" class="auth-tab active" id="tab-login"    onclick="showTab('login')">Sign In</button>
@@ -172,7 +190,7 @@
             onkeydown="if(event.key==='Enter') doLogin()">
         </div>
         <div class="error-msg" id="login-error"></div>
-        <button class="btn-auth" id="btn-login" onclick="doLogin()">Sign In →</button>
+        <button class="btn-auth" onclick="doLogin()">Sign In →</button>
       </div>
 
       <!-- Register -->
@@ -193,10 +211,11 @@
             onkeydown="if(event.key==='Enter') doRegister()">
         </div>
         <div class="error-msg" id="reg-error"></div>
-        <button class="btn-auth" id="btn-register" onclick="doRegister()">Create Account →</button>
+        <div class="error-msg" id="reg-success" style="background:rgba(34,197,94,0.12);border-color:rgba(34,197,94,0.3);color:#22c55e;"></div>
+        <button class="btn-auth" onclick="doRegister()">Create Account →</button>
       </div>
 
-      <!-- Advanced -->
+      <!-- Advanced (API base URL) -->
       <details class="auth-advanced">
         <summary>⚙ Advanced settings</summary>
         <div class="auth-advanced-body">
@@ -212,148 +231,79 @@
     </div>
   </div>
 
-  <script>
-  /* ── PTAuth (inlined so it's always available) ── */
-  (function(global) {
-    'use strict';
-    const STORAGE_TOKEN = 'pt_token';
-    const STORAGE_USER  = 'pt_user';
-    const STORAGE_BASE  = 'pt_api_base';
-
-    function getBase() { return localStorage.getItem(STORAGE_BASE) || ''; }
-    function setApiBase(base) {
-      if (base) localStorage.setItem(STORAGE_BASE, base);
-      else localStorage.removeItem(STORAGE_BASE);
-    }
-    function getToken() { return localStorage.getItem(STORAGE_TOKEN) || null; }
-    function getUser() {
-      try { return JSON.parse(localStorage.getItem(STORAGE_USER)); } catch { return null; }
-    }
-    function setSession(token, user) {
-      localStorage.setItem(STORAGE_TOKEN, token);
-      localStorage.setItem(STORAGE_USER, JSON.stringify(user));
-    }
-    function clearSession() {
-      localStorage.removeItem(STORAGE_TOKEN);
-      localStorage.removeItem(STORAGE_USER);
-    }
-    async function api(endpoint, options = {}) {
-      const url = getBase() + endpoint;
-      const token = getToken();
-      const headers = {
-        'Content-Type': 'application/json',
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        ...(options.headers || {}),
-      };
-      const res = await fetch(url, { ...options, headers });
-      const contentType = res.headers.get('Content-Type') || '';
-      const data = contentType.includes('application/json')
-        ? await res.json()
-        : { error: await res.text() };
-      if (!res.ok) {
-        if (res.status === 401) {
-          clearSession();
-          location.href = 'login.html?next=' + encodeURIComponent(location.pathname + location.search);
-          throw new Error('Session expired. Please login again.');
-        }
-        throw new Error(data.error || `HTTP ${res.status}`);
-      }
-      return data;
-    }
-    function requireAuth() {
-      if (!getToken()) {
-        location.href = 'login.html?next=' + encodeURIComponent(location.pathname + location.search);
-        return false;
-      }
-      return true;
-    }
-    function applyShell() {
-      const user = getUser();
-      if (!user) return;
-      const initials = (user.name || 'U').split(/\s+/).map(w => w[0]).join('').toUpperCase().slice(0, 2);
-      document.querySelectorAll('.user-name').forEach(el => el.textContent = user.name || el.textContent);
-      document.querySelectorAll('.user-avatar').forEach(el => el.textContent = initials);
-      const footer = document.querySelector('.sidebar-footer');
-      if (footer && !footer.querySelector('.logout-btn')) {
-        const btn = document.createElement('button');
-        btn.className = 'logout-btn';
-        btn.innerHTML = '⇠ Sign Out';
-        btn.addEventListener('click', () => { clearSession(); location.href = 'login.html'; });
-        footer.appendChild(btn);
-      }
-    }
-    global.PTAuth = { api, getToken, getUser, setSession, clearSession, requireAuth, applyShell, getBase, setApiBase };
-  })(window);
-  </script>
-
+  <script src="api.js"></script>
   <script>
     // Init API base field
     (function(){
-      const el = document.getElementById('api-base');
-      el.value = PTAuth.getBase();
-      el.addEventListener('change', () => {
-        const v = el.value.trim();
-        PTAuth.setApiBase(v ? v.replace(/\/$/, '') : '');
+      const el=document.getElementById('api-base');
+      el.value=PTAuth.getBase();
+      el.addEventListener('change',()=>{
+        const v=el.value.trim();
+        PTAuth.setApiBase(v?v.replace(/\/$/,''):'');
       });
     })();
 
-    // If a valid token already exists, skip the login page entirely.
-    // No API round-trip — a network error would wrongly wipe a valid token.
-    // Expired tokens are handled by the dashboard's own 401 redirect.
-    (function checkExistingSession() {
-      if (PTAuth.getToken()) location.replace(nextPage());
+    // Already logged in → verify token is still valid first
+    (async function checkExistingSession(){
+      const token = PTAuth.getToken();
+      if(!token) return;
+      try {
+        await PTAuth.api('/api/dashboard');
+        location.replace(nextPage());
+      } catch(e) {
+        PTAuth.clearSession();
+      }
     })();
 
-    function nextPage() {
-      const n = new URLSearchParams(location.search).get('next');
-      return n && n.endsWith('.html') ? n : 'dashboard.html';
+    function nextPage(){
+      const n=new URLSearchParams(location.search).get('next');
+      return n&&n.endsWith('.html')?n:'dashboard.html';
     }
 
-    function showTab(which) {
-      ['login', 'register'].forEach(t => {
-        document.getElementById('tab-' + t).classList.toggle('active', t === which);
-        document.getElementById('panel-' + t).classList.toggle('active', t === which);
+    function showTab(which){
+      ['login','register'].forEach(t=>{
+        document.getElementById('tab-'+t).classList.toggle('active',t===which);
+        document.getElementById('panel-'+t).classList.toggle('active',t===which);
       });
     }
 
-    function showError(id, msg) {
-      const el = document.getElementById(id);
-      el.textContent = msg;
-      el.classList.add('show');
-      setTimeout(() => el.classList.remove('show'), 4000);
+    function showError(id,msg){
+      const el=document.getElementById(id);
+      if(!el) return;
+      el.textContent=msg; el.classList.add('show');
+      setTimeout(()=>el.classList.remove('show'),4000);
     }
 
-    async function doLogin() {
-      const email    = document.getElementById('login-email').value.trim();
-      const password = document.getElementById('login-password').value;
-      if (!email || !password) { showError('login-error', 'Please fill in all fields'); return; }
-      const btn = document.getElementById('btn-login');
-      btn.disabled = true; btn.textContent = 'Signing in…';
-      try {
-        const data = await PTAuth.api('/api/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) });
-        PTAuth.setSession(data.token, data.user);
-        location.href = nextPage();
-      } catch(e) {
-        showError('login-error', e.message);
-        btn.disabled = false; btn.textContent = 'Sign In →';
-      }
+    function showSuccess(id,msg){
+      const el=document.getElementById(id);
+      if(!el) return;
+      el.textContent=msg; el.classList.add('show');
+      setTimeout(()=>el.classList.remove('show'),5000);
     }
 
-    async function doRegister() {
-      const name     = document.getElementById('reg-name').value.trim();
-      const email    = document.getElementById('reg-email').value.trim();
-      const password = document.getElementById('reg-password').value;
-      if (!name || !email || !password) { showError('reg-error', 'Please fill in all fields'); return; }
-      const btn = document.getElementById('btn-register');
-      btn.disabled = true; btn.textContent = 'Creating account…';
-      try {
-        const data = await PTAuth.api('/api/auth/register', { method: 'POST', body: JSON.stringify({ name, email, password }) });
-        PTAuth.setSession(data.token, data.user);
-        location.href = 'dashboard.html';
-      } catch(e) {
-        showError('reg-error', e.message);
-        btn.disabled = false; btn.textContent = 'Create Account →';
-      }
+    async function doLogin(){
+      const email=document.getElementById('login-email').value.trim();
+      const password=document.getElementById('login-password').value;
+      if(!email||!password){showError('login-error','Please fill in all fields');return;}
+      try{
+        const data=await PTAuth.api('/api/auth/login',{method:'POST',body:JSON.stringify({email,password})});
+        PTAuth.setSession(data.token,data.user);
+        location.href=nextPage();
+      }catch(e){showError('login-error',e.message);}
+    }
+
+    async function doRegister(){
+      const name=document.getElementById('reg-name').value.trim();
+      const email=document.getElementById('reg-email').value.trim();
+      const password=document.getElementById('reg-password').value;
+      if(!name||!email||!password){showError('reg-error','Please fill in all fields');return;}
+      try{
+        await PTAuth.api('/api/auth/register',{method:'POST',body:JSON.stringify({name,email,password})});
+        // Registration successful → go to login page
+        showTab('login');
+        document.getElementById('login-email').value = email;
+        showSuccess('reg-success','Account created! Please sign in.');
+      }catch(e){showError('reg-error',e.message);}
     }
   </script>
 </body>
